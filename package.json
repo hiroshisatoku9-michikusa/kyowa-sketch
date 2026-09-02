@@ -1,0 +1,23 @@
+{
+  "name": "kyowa-sketch",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A co-speech AI drafting interface where unfinished words can be lightly read before they are sent.",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check public/app.js && node --check scripts/security-check.mjs && npm run security:check",
+    "security:check": "node scripts/security-check.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "ai",
+    "writing",
+    "interface",
+    "kyowa",
+    "co-speech"
+  ],
+  "license": "MIT"
+}
