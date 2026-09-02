@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kyowa Sketch</title>
+    <meta
+      name="description"
+      content="A co-speech AI drafting surface that offers light provisional readings while you type."
+    />
+    <link rel="stylesheet" href="/styles.css?v=20260902-i18n" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" data-i18n="eyebrow">local co-speech</p>
+          <h1>Kyowa Sketch</h1>
+        </div>
+        <div class="runtime" aria-live="polite">
+          <span id="connectionDot" class="dot" aria-hidden="true"></span>
+          <span id="runtimeText">checking runtime</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="draft-pane" aria-labelledby="draftLabel">
+          <div class="draft-head">
+            <div>
+              <p class="label" id="draftLabel" data-i18n="draftLabel">draft</p>
+              <p class="hint" data-i18n="draftHint">Unsent text</p>
+            </div>
+            <div class="draft-meter">
+              <span id="charCount">0</span>
+              <span data-i18n="chars">chars</span>
+            </div>
+          </div>
+          <textarea
+            id="draft"
+            spellcheck="true"
+            autocomplete="off"
+            placeholder="I keep noticing that AI replies arrive too late, after the thought has already hardened..."
+            data-i18n-placeholder="draftPlaceholder"
+            aria-describedby="draftHelp"
+          ></textarea>
+          <p id="draftHelp" class="sr-only" data-i18n="draftHelp">
+            Start typing. After a short pause, provisional AI readings appear in the side rail.
+          </p>
+        </section>
+
+        <aside class="side-pane" aria-labelledby="readingsLabel">
+          <div class="side-head">
+            <div>
+              <p class="label" id="readingsLabel" data-i18n="readingLabel">reading</p>
+              <p class="hint" data-i18n="readingHint">Weak / provisional</p>
+            </div>
+            <label class="switch">
+              <input id="activeToggle" type="checkbox" checked />
+              <span data-i18n="aiOn">AI on</span>
+            </label>
+          </div>
+
+          <div class="controls" aria-label="AI reading controls">
+            <label>
+              <span data-i18n="interval">Delay</span>
+              <input id="delayRange" type="range" min="1500" max="8000" step="500" value="4000" />
+              <output id="delayValue">4.0s</output>
+            </label>
+
+            <fieldset>
+              <legend data-i18n="densityLegend">Reading density</legend>
+              <label>
+                <input type="radio" name="density" value="thin" checked />
+                <span data-i18n="densityThin">Thin</span>
+              </label>
+              <label>
+                <input type="radio" name="density" value="question" />
+                <span data-i18n="densityQuestion">Question</span>
+              </label>
+              <label>
+                <input type="radio" name="density" value="specific" />
+                <span data-i18n="densitySpecific">Specific</span>
+              </label>
+            </fieldset>
+
+            <fieldset class="language-control">
+              <legend data-i18n="languageLegend">Language</legend>
+              <label>
+                <input type="radio" name="language" value="en" checked />
+                <span>English</span>
+              </label>
+              <label>
+                <input type="radio" name="language" value="ja" />
+                <span>日本語</span>
+              </label>
+            </fieldset>
+          </div>
+
+          <div id="currentReading" class="current-reading" aria-live="polite">
+            <p class="empty-state" data-i18n="emptyStart">Start typing and a weak reading appears here.</p>
+          </div>
+
+          <section class="markers-panel" aria-labelledby="markersLabel">
+            <div class="markers-head">
+              <p class="label" id="markersLabel" data-i18n="markersLabel">kept fragments</p>
+              <button id="clearMarkers" type="button" data-i18n="clear">clear</button>
+            </div>
+            <ol id="markers" class="markers" aria-label="kept weak readings"></ol>
+          </section>
+
+          <div class="usage-strip" aria-label="usage">
+            <span><strong id="requestCount">0</strong> <span id="requestUnit" data-i18n="reads">reads</span></span>
+            <span><strong id="tokenCount">0</strong> <span id="tokenUnit" data-i18n="tokens">tokens</span></span>
+            <span id="limitText">daily cap</span>
+            <span><strong id="runtimeMode">Codex</strong></span>
+          </div>
+
+          <div class="history-head">
+            <p class="label" data-i18n="historyLabel">recent traces</p>
+            <button id="clearHistory" type="button" data-i18n="clear">clear</button>
+          </div>
+          <ol id="history" class="history" aria-label="recent readings"></ol>
+        </aside>
+      </main>
+    </div>
+
+    <script src="/app.js?v=20260902-i18n" defer></script>
+  </body>
+</html>
