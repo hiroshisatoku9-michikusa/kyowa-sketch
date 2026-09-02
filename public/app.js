@@ -2,7 +2,8 @@
   const els = {
     draft: document.querySelector("#draft"),
     charCount: document.querySelector("#charCount"),
-    currentReading: document.querySelector("#currentReading"),
+    marginNotes: document.querySelector("#marginNotes"),
+    readGaze: document.querySelector("#readGaze"),
     history: document.querySelector("#history"),
     activeToggle: document.querySelector("#activeToggle"),
     delayRange: document.querySelector("#delayRange"),
@@ -22,14 +23,12 @@
     en: {
       eyebrow: "local co-speech",
       draftLabel: "draft",
-      draftHint: "Unsent text",
+      draftHint: "Live, unsent paper",
       chars: "chars",
       draftPlaceholder:
         "I keep noticing that AI replies arrive too late, after the thought has already hardened...",
       draftHelp:
-        "Start typing. After a short pause, provisional AI readings appear in the side rail.",
-      readingLabel: "reading",
-      readingHint: "Weak / provisional",
+        "Start typing. After a short pause, provisional AI readings appear as faint marginal notes.",
       aiOn: "AI on",
       interval: "Delay",
       densityLegend: "Reading density",
@@ -37,7 +36,8 @@
       densityQuestion: "Question",
       densitySpecific: "Specific",
       languageLegend: "Language",
-      emptyStart: "Start typing and a weak reading appears here.",
+      advancedSummary: "Advanced",
+      emptyStart: "A faint reading will appear in the margin.",
       markersLabel: "kept fragments",
       historyLabel: "recent traces",
       clear: "clear",
@@ -45,33 +45,26 @@
       tokens: "tokens",
       dailyCap: "daily cap",
       aiPaused: "AI readings are paused. Your draft stays here.",
-      dismissed: "Passed. Keep writing and another reading will arrive.",
-      tooShort: "Write a little more and a weak reading will appear.",
+      tooShort: "Write a little more and the margin will begin to answer.",
       fetchFailed: "The reading stalled. Wait a moment and keep writing.",
       rateLimited: "A little too fast. Keeping this draft for the next interval.",
       authRequired: "Sign in to Codex with ChatGPT, then start the app again.",
       budgetExhausted: "Today's reading limit is reached. You can keep writing with AI off.",
       unchanged: "When the draft moves a little more, the next reading will appear.",
       genericError: "Not ready yet. Check the Codex connection.",
-      readingNow: "Reading...",
-      noReading: "No reading to place this time.",
-      keep: "Keep",
-      push: "Push back",
-      near: "Close",
-      dismiss: "Let pass",
+      readingNow: "reading",
+      noReading: "No marginal reading this time.",
       noMarks: "No marks",
-      pushInsert: "Not quite; ",
-      nearInsert: "Close, but maybe ",
+      pinNote: "Pin this marginal reading",
+      unpinNote: "Unpin this marginal reading",
     },
     ja: {
       eyebrow: "local co-speech",
       draftLabel: "下書き",
-      draftHint: "未送信の言葉",
+      draftHint: "未送信の紙面",
       chars: "文字",
       draftPlaceholder: "最近AIを使っていて、便利すぎることについて、なんというか...",
-      draftHelp: "書き始めると、短い間のあとにサイドレールへ暫定的な読みが出ます。",
-      readingLabel: "読み",
-      readingHint: "弱い / 暫定",
+      draftHelp: "書き始めると、短い間のあとに、淡い読みが余白へ置かれます。",
       aiOn: "AI on",
       interval: "間隔",
       densityLegend: "読みの濃さ",
@@ -79,7 +72,8 @@
       densityQuestion: "問い",
       densitySpecific: "具体",
       languageLegend: "言語",
-      emptyStart: "書き始めると、ここに薄い読みが出ます。",
+      advancedSummary: "詳細",
+      emptyStart: "余白に薄い読みが置かれます。",
       markersLabel: "残した断片",
       historyLabel: "最近の痕跡",
       clear: "消す",
@@ -87,23 +81,18 @@
       tokens: "トークン",
       dailyCap: "日次上限",
       aiPaused: "AIの読みを止めています。文章はここに残ります。",
-      dismissed: "流しました。書き続けるとまた別の読みが来ます。",
-      tooShort: "もう少し書くと、薄い読みが置かれます。",
+      tooShort: "もう少し書くと、余白が応答し始めます。",
       fetchFailed: "読みの取得で止まりました。少し待ってからまた書いてみてください。",
       rateLimited: "少し速すぎます。今の文を保ったまま、次の間で読みます。",
       authRequired: "CodexにChatGPTでサインインしてから、もう一度起動してください。",
       budgetExhausted: "今日の読み上限に達しました。AIを止めて書き続けられます。",
       unchanged: "もう少し文が動いたら、次の読みを置きます。",
       genericError: "まだ読めません。Codexの状態を確認してください。",
-      readingNow: "読んでいます...",
-      noReading: "今回は置ける読みがありませんでした。",
-      keep: "残す",
-      push: "押し返す",
-      near: "近い",
-      dismiss: "流す",
+      readingNow: "読んでいます",
+      noReading: "今回は余白に置ける読みがありませんでした。",
       noMarks: "印なし",
-      pushInsert: "いや、そこではなく、",
-      nearInsert: "近いけれど、むしろ",
+      pinNote: "この余白の読みを残す",
+      unpinNote: "この余白の読みの固定を外す",
     },
   };
 
@@ -117,10 +106,17 @@
     markers: "kyowa:markers",
   };
 
+  const noteOffsets = [
+    { x: "0px", y: "0px", r: "-0.2deg" },
+    { x: "9px", y: "4px", r: "0.18deg" },
+    { x: "-4px", y: "10px", r: "-0.08deg" },
+  ];
+
   const app = {
     status: null,
     timer: null,
     controller: null,
+    gazeTimer: null,
     lastSentText: "",
     lastSentAt: 0,
     history: loadHistory(),
@@ -129,6 +125,8 @@
     currentText: "",
     currentLines: [],
     inFlight: false,
+    notes: [],
+    noteId: 0,
   };
 
   init();
@@ -149,6 +147,7 @@
     renderMarkers();
     renderHistory();
     bindEvents();
+    showMarginHint(t("emptyStart"));
     await refreshStatus();
     scheduleRead({ immediate: false });
   }
@@ -157,7 +156,21 @@
     els.draft.addEventListener("input", () => {
       localStorage.setItem(storage.draft, els.draft.value);
       updateDraftMeter();
+      ageNotesByDraft();
       scheduleRead({ immediate: false });
+    });
+
+    els.draft.addEventListener("dragover", (event) => {
+      if (event.dataTransfer?.types.includes("text/plain")) {
+        event.preventDefault();
+      }
+    });
+
+    els.draft.addEventListener("drop", (event) => {
+      const text = event.dataTransfer?.getData("text/plain");
+      if (!text) return;
+      event.preventDefault();
+      insertAtCursor(text);
     });
 
     els.activeToggle.addEventListener("change", () => {
@@ -166,7 +179,8 @@
         scheduleRead({ immediate: true });
       } else {
         cancelInFlight();
-        renderEmpty(t("aiPaused"));
+        fadeUnpinnedNotes();
+        showMarginHint(t("aiPaused"));
       }
     });
 
@@ -189,27 +203,10 @@
         localStorage.setItem(storage.language, app.language);
         app.lastSentText = "";
         applyLanguage();
-        renderEmpty(t("emptyStart"));
+        showMarginHint(t("emptyStart"));
         scheduleRead({ immediate: true });
       });
     }
-
-    els.currentReading.addEventListener("click", (event) => {
-      const button = event.target.closest("button[data-action]");
-      if (!button) return;
-      if (button.dataset.action === "dismiss") {
-        renderEmpty(t("dismissed"));
-      }
-      if (button.dataset.action === "keep") {
-        keepCurrentReading();
-      }
-      if (button.dataset.action === "push") {
-        insertAtCursor(t("pushInsert"));
-      }
-      if (button.dataset.action === "near") {
-        insertAtCursor(t("nearInsert"));
-      }
-    });
 
     els.clearMarkers.addEventListener("click", () => {
       app.markers = [];
@@ -267,6 +264,7 @@
     app.inFlight = true;
     app.lastSentText = draft;
     app.lastSentAt = Date.now();
+    flashReadGaze();
     renderStreaming("");
 
     try {
@@ -328,7 +326,7 @@
         }
         if (event.type === "done") {
           const linesForHistory = parseReadingLines(app.currentText);
-          renderFinal(linesForHistory, demo);
+          renderFinal(linesForHistory);
           addHistory(linesForHistory, latestUsage, demo);
         }
       }
@@ -359,45 +357,199 @@
 
   function renderStreaming(text) {
     app.currentLines = [];
+    removeNotes((note) => note.hint, true);
     const safeText = text.trim() || t("readingNow");
-    els.currentReading.innerHTML = `
-      <div class="reading-lines">
-        <p class="reading-line streaming">${escapeHtml(safeText)}</p>
-      </div>
-    `;
+    const note = findNote((item) => item.streaming) || createNote("", 0, {
+      className: "is-streaming",
+      streaming: true,
+      draftLength: els.draft.value.trim().length,
+    });
+    note.text = safeText;
+    note.element.innerHTML = `${escapeHtml(safeText)}<span class="blinker" aria-hidden="true"></span>`;
   }
 
-  function renderFinal(lines, demo) {
+  function renderFinal(lines) {
+    removeNotes((note) => note.streaming || note.hint, true);
     if (!lines.length) {
       renderEmpty(t("noReading"));
       return;
     }
 
     app.currentLines = lines;
-    const marker = demo ? "<p class=\"empty-state\">local demo</p>" : "";
-    els.currentReading.innerHTML = `
-      <div class="reading-lines">
-        ${lines.map((line) => `<p class="reading-line">${escapeHtml(line)}</p>`).join("")}
-      </div>
-      <div class="reading-actions">
-        <button type="button" data-action="keep">${t("keep")}</button>
-        <button type="button" data-action="push">${t("push")}</button>
-        <button type="button" data-action="near">${t("near")}</button>
-        <button type="button" data-action="dismiss">${t("dismiss")}</button>
-      </div>
-      ${marker}
-    `;
+    fadeUnpinnedNotes();
+    lines.forEach((line, index) => {
+      const note = createNote(line, index, {
+        draftLength: els.draft.value.trim().length,
+      });
+      scheduleNoteLifecycle(note, index);
+    });
   }
 
   function renderEmpty(message) {
     app.currentLines = [];
-    els.currentReading.innerHTML = `<p class="empty-state">${escapeHtml(message)}</p>`;
+    showMarginHint(message);
+  }
+
+  function showMarginHint(message) {
+    const existing = findNote((note) => note.hint);
+    if (existing) {
+      existing.text = message;
+      existing.element.textContent = message;
+      clearNoteTimers(existing);
+      scheduleHintLifecycle(existing);
+      return;
+    }
+
+    const note = createNote(message, 0, {
+      className: "is-hint",
+      hint: true,
+      draftLength: els.draft.value.trim().length,
+    });
+    scheduleHintLifecycle(note);
+  }
+
+  function createNote(text, index, options = {}) {
+    const note = {
+      id: ++app.noteId,
+      text,
+      bornAt: Date.now(),
+      draftLength: options.draftLength || 0,
+      pinned: false,
+      streaming: Boolean(options.streaming),
+      hint: Boolean(options.hint),
+      timers: [],
+      element: document.createElement(options.hint ? "p" : "button"),
+    };
+
+    const offset = noteOffsets[index % noteOffsets.length];
+    const top = anchorTopForDraft() + index * 112;
+    note.element.className = `margin-note ${options.className || ""}`.trim();
+    note.element.dataset.noteId = String(note.id);
+    note.element.style.setProperty("--note-top", `${top}px`);
+    note.element.style.setProperty("--note-x", offset.x);
+    note.element.style.setProperty("--note-y", offset.y);
+    note.element.style.setProperty("--note-r", offset.r);
+    note.element.textContent = text;
+
+    if (!note.hint) {
+      note.element.type = "button";
+      note.element.draggable = true;
+      note.element.setAttribute("aria-label", t("pinNote"));
+      note.element.addEventListener("click", () => toggleNotePin(note));
+      note.element.addEventListener("dragstart", (event) => {
+        event.dataTransfer?.setData("text/plain", note.text);
+        event.dataTransfer.effectAllowed = "copy";
+      });
+    }
+
+    app.notes.push(note);
+    els.marginNotes.appendChild(note.element);
+    return note;
+  }
+
+  function scheduleNoteLifecycle(note, index = 0) {
+    clearNoteTimers(note);
+    note.timers.push(
+      window.setTimeout(() => {
+        if (!note.pinned) note.element.dataset.state = "fading";
+      }, 12_000 + index * 1_500),
+    );
+    note.timers.push(
+      window.setTimeout(() => {
+        if (!note.pinned) fadeAndRemove(note);
+      }, 25_000 + index * 1_700),
+    );
+  }
+
+  function scheduleHintLifecycle(note) {
+    clearNoteTimers(note);
+    note.timers.push(window.setTimeout(() => fadeAndRemove(note), 4_000));
+  }
+
+  function toggleNotePin(note) {
+    if (note.streaming || note.hint) return;
+    note.pinned = !note.pinned;
+    clearNoteTimers(note);
+    note.element.dataset.state = note.pinned ? "pinned" : "";
+    note.element.setAttribute("aria-label", note.pinned ? t("unpinNote") : t("pinNote"));
+    if (note.pinned) {
+      keepLines([note.text]);
+    } else {
+      scheduleNoteLifecycle(note);
+    }
+  }
+
+  function ageNotesByDraft() {
+    const draftLength = els.draft.value.trim().length;
+    for (const note of [...app.notes]) {
+      if (note.pinned || note.streaming || note.hint) continue;
+      if (draftLength - note.draftLength > 60) fadeAndRemove(note);
+    }
+  }
+
+  function fadeUnpinnedNotes() {
+    for (const note of [...app.notes]) {
+      if (!note.pinned) fadeAndRemove(note);
+    }
+  }
+
+  function fadeAndRemove(note) {
+    if (!app.notes.includes(note)) return;
+    clearNoteTimers(note);
+    note.element.dataset.state = "gone";
+    note.timers.push(window.setTimeout(() => removeNote(note), 720));
+  }
+
+  function removeNotes(predicate, instant = false) {
+    for (const note of [...app.notes]) {
+      if (predicate(note)) removeNote(note, instant);
+    }
+  }
+
+  function removeNote(note, instant = false) {
+    clearNoteTimers(note);
+    app.notes = app.notes.filter((item) => item !== note);
+    if (instant) {
+      note.element.remove();
+      return;
+    }
+    note.element.remove();
+  }
+
+  function clearNoteTimers(note) {
+    for (const timer of note.timers) {
+      window.clearTimeout(timer);
+    }
+    note.timers = [];
+  }
+
+  function findNote(predicate) {
+    return app.notes.find(predicate);
+  }
+
+  function anchorTopForDraft() {
+    const marginHeight = els.marginNotes.clientHeight || 648;
+    const beforeCursor = els.draft.value.slice(0, els.draft.selectionStart || els.draft.value.length);
+    const hardBreaks = beforeCursor.split("\n").length - 1;
+    const softWraps = Math.floor(beforeCursor.length / 58);
+    const approximateLine = hardBreaks + softWraps;
+    const top = 72 + approximateLine * 18 - els.draft.scrollTop * 0.35;
+    return clamp(top, 72, Math.max(92, marginHeight - 286));
+  }
+
+  function flashReadGaze() {
+    window.clearTimeout(app.gazeTimer);
+    els.readGaze.classList.remove("flash");
+    void els.readGaze.offsetWidth;
+    els.readGaze.classList.add("flash");
+    app.gazeTimer = window.setTimeout(() => els.readGaze.classList.remove("flash"), 1500);
   }
 
   function renderTotals(totals = {}, limits = {}) {
     const tokenTotal =
-      Number(totals.totalTokens || 0) ||
-      Number(totals.inputTokens || 0) + Number(totals.outputTokens || 0);
+      Number(totals.totalTokens || totals.total_tokens || 0) ||
+      Number(totals.inputTokens || totals.input_tokens || 0) +
+        Number(totals.outputTokens || totals.output_tokens || 0);
     els.requestCount.textContent = String(totals.requests || 0);
     els.tokenCount.textContent = String(tokenTotal);
     els.runtimeMode.textContent = "Codex";
@@ -425,16 +577,16 @@
     renderHistory();
   }
 
-  function keepCurrentReading() {
-    if (!app.currentLines.length) return;
-    const key = app.currentLines.join("\n");
+  function keepLines(lines) {
+    if (!lines.length) return;
+    const key = lines.join("\n");
     const existing = app.markers.find((item) => item.key === key);
     if (existing) return;
 
     app.markers.unshift({
       key,
       at: Date.now(),
-      lines: app.currentLines,
+      lines,
       excerpt: els.draft.value.trim().slice(-90),
     });
     app.markers = app.markers.slice(0, 6);
@@ -470,7 +622,7 @@
       .map((item) => {
         const usageText = item.demo
           ? "demo"
-          : `${Number(item.usage?.total_tokens || 0)} ${t("tokens")}`;
+          : `${Number(item.usage?.total_tokens || item.usage?.totalTokens || 0)} ${t("tokens")}`;
         return `
           <li>
             <time>${new Date(item.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · ${usageText}</time>
@@ -596,5 +748,9 @@
       notation: "compact",
       maximumFractionDigits: 1,
     }).format(Number(value || 0));
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
   }
 })();
