@@ -8,7 +8,7 @@
       name="description"
       content="A co-speech AI drafting surface that offers light provisional readings while you type."
     />
-    <link rel="stylesheet" href="/styles.css?v=20260902-marginalia" />
+    <link rel="stylesheet" href="/styles.css?v=20260902-interline" />
   </head>
   <body>
     <div class="app-shell">
@@ -62,10 +62,10 @@
               data-i18n-placeholder="draftPlaceholder"
               aria-describedby="draftHelp"
             ></textarea>
-            <div id="marginNotes" class="margin-notes" aria-live="polite" aria-label="weak readings"></div>
+            <div id="ghostNotes" class="ghost-notes" aria-live="polite" aria-label="ghost co-speech"></div>
           </div>
           <p id="draftHelp" class="sr-only" data-i18n="draftHelp">
-            Start typing. After a short pause, provisional AI readings appear as faint marginal notes.
+            Start typing. After a short pause, provisional AI readings appear faintly between your lines.
           </p>
         </section>
 
@@ -75,8 +75,8 @@
             <section class="control-group" aria-label="AI reading controls">
               <div class="range-control">
                 <label for="delayRange" data-i18n="interval">Delay</label>
-                <input id="delayRange" type="range" min="1500" max="8000" step="500" value="4000" />
-                <output id="delayValue">4.0s</output>
+                <input id="delayRange" type="range" min="1500" max="8000" step="500" value="3000" />
+                <output id="delayValue">3.0s</output>
               </div>
 
               <fieldset>
@@ -123,6 +123,6 @@
       </main>
     </div>
 
-    <script src="/app.js?v=20260902-marginalia" defer></script>
+    <script src="/app.js?v=20260902-interline" defer></script>
   </body>
 </html>

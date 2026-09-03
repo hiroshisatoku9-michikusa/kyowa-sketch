@@ -209,8 +209,6 @@ h1 {
 .paper-surface {
   position: relative;
   min-height: 648px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 312px;
   background: var(--surface);
   overflow: hidden;
 }
@@ -218,11 +216,10 @@ h1 {
 textarea {
   position: relative;
   z-index: 1;
-  grid-column: 1;
   width: 100%;
   min-height: 648px;
   height: calc(100vh - 184px);
-  padding: 34px 42px 42px;
+  padding: 38px 64px 48px;
   border: 0;
   outline: 0;
   resize: none;
@@ -230,8 +227,8 @@ textarea {
   color: var(--ink);
   font-family:
     "Iowan Old Style", "YuMincho", "Hiragino Mincho ProN", Georgia, serif;
-  font-size: 29px;
-  line-height: 1.55;
+  font-size: 28px;
+  line-height: 2.08;
   letter-spacing: 0;
 }
 
@@ -242,7 +239,7 @@ textarea::placeholder {
 .read-gaze {
   position: absolute;
   z-index: 0;
-  inset: 0 312px 0 0;
+  inset: 0;
   pointer-events: none;
   opacity: 0;
   background:
@@ -271,39 +268,40 @@ textarea::placeholder {
   }
 }
 
-.margin-notes {
-  position: relative;
-  grid-column: 2;
+.ghost-notes {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
   min-width: 0;
-  border-left: 1px solid var(--line);
-  background: rgba(255, 253, 248, 0.66);
+  pointer-events: none;
   overflow: hidden;
 }
 
-.margin-note {
+.ghost-note {
   position: absolute;
   top: var(--note-top, 72px);
-  left: 22px;
-  right: 22px;
+  left: var(--note-left, 64px);
+  right: 64px;
   z-index: 2;
   margin: 0;
-  padding: 0 0 0 12px;
+  padding: 0;
   border: 0;
-  border-left: 1px solid rgba(0, 121, 132, 0.32);
   border-radius: 0;
   background: transparent;
-  color: rgba(16, 48, 54, 0.72);
+  color: rgba(0, 104, 114, 0.48);
   font-family:
     "Iowan Old Style", "YuMincho", "Hiragino Mincho ProN", Georgia, serif;
-  font-size: 15px;
+  font-size: 14px;
   font-style: italic;
-  line-height: 1.55;
+  line-height: 1.35;
   letter-spacing: 0;
   text-align: left;
-  white-space: pre-wrap;
-  max-height: 8.8em;
+  white-space: nowrap;
+  max-width: 70ch;
   overflow: hidden;
-  opacity: 0.55;
+  text-overflow: ellipsis;
+  opacity: 0.62;
+  text-shadow: 0 1px 0 rgba(255, 253, 248, 0.85);
   transform: translate(var(--note-x, 0), var(--note-y, 0)) rotate(var(--note-r, 0deg));
   transition:
     opacity 700ms ease,
@@ -311,44 +309,45 @@ textarea::placeholder {
     transform 700ms ease;
 }
 
-button.margin-note {
+button.ghost-note {
   cursor: pointer;
+  pointer-events: auto;
 }
 
-.margin-note:hover,
-.margin-note:focus-visible {
+.ghost-note:hover,
+.ghost-note:focus-visible {
   background: transparent;
-  color: rgba(16, 48, 54, 0.95);
-  opacity: 0.75;
+  color: rgba(0, 104, 114, 0.74);
+  opacity: 0.82;
   outline: 0;
 }
 
-.margin-note[data-state="fading"] {
-  opacity: 0.22;
+.ghost-note[data-state="fading"] {
+  opacity: 0.2;
 }
 
-.margin-note[data-state="gone"] {
+.ghost-note[data-state="gone"] {
   opacity: 0;
   transform: translate(var(--note-x, 0), 9px) rotate(var(--note-r, 0deg));
   pointer-events: none;
 }
 
-.margin-note[data-state="pinned"] {
-  border-left-color: var(--warm);
-  color: var(--ink);
+.ghost-note[data-state="pinned"] {
+  color: rgba(17, 19, 21, 0.68);
   font-style: normal;
-  opacity: 0.82;
+  opacity: 0.78;
+  text-decoration: underline;
+  text-decoration-color: rgba(170, 63, 44, 0.38);
+  text-underline-offset: 5px;
 }
 
-.margin-note.is-streaming {
-  border-left-color: rgba(170, 63, 44, 0.42);
-  color: rgba(94, 38, 27, 0.72);
+.ghost-note.is-streaming {
+  color: rgba(170, 63, 44, 0.56);
 }
 
-.margin-note.is-hint {
-  border-left-color: rgba(144, 152, 157, 0.35);
+.ghost-note.is-hint {
   color: var(--faint);
-  opacity: 0.52;
+  opacity: 0.46;
 }
 
 .blinker {

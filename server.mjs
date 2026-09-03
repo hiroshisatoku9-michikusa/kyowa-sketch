@@ -22,7 +22,7 @@ const MIN_SECONDS_BETWEEN_REQUESTS = clampFloat(
   process.env.KYOWA_MIN_SECONDS_BETWEEN_REQUESTS,
   1,
   20,
-  4,
+  3,
 );
 
 const state = {

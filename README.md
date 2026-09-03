@@ -5,9 +5,9 @@ Kyowa Sketch is a local Codex-powered prototype of a co-speech AI interface. It 
 - making unfinished words visible to another mind
 - handing over the turn as a completed message
 
-There is no Send button. As you type, the app waits 4 seconds, then asks Codex for one to three weak, provisional readings of the draft so far. They appear in the side rail as material you can ignore, keep, refuse, or push against.
+There is no Send button. As you type, the app waits 3 seconds, then asks Codex for one to three weak, provisional readings of the draft so far. They appear as faint ghost co-speech between your own lines, close enough to ignore by simply continuing to write.
 
-The default interface and reading language is English. Use the language switch in the right rail to move between English and Japanese; the selected language is saved locally and sent with each reading request.
+The default interface and reading language is English. Use the compact language switch in the header to move between English and Japanese; the selected language is saved locally and sent with each reading request.
 
 ## Run Locally
 
@@ -55,8 +55,8 @@ The prototype is intentionally conservative:
 
 - default model: `gpt-5.6-luna`
 - default reasoning effort: `none`
-- browser debounce: `4` seconds
-- server-side minimum between reads: `4` seconds
+- browser debounce: `3` seconds
+- server-side minimum between reads: `3` seconds
 - minimum text change before another read: `18` characters
 - default language: English, with a local English/Japanese switch
 - maximum draft sent per read: `1800` characters
@@ -83,7 +83,7 @@ KYOWA_CODEX_EFFORT=none
 KYOWA_MAX_DRAFT_CHARS=1800
 KYOWA_MAX_OUTPUT_CHARS=520
 KYOWA_MIN_CHANGED_CHARS=18
-KYOWA_MIN_SECONDS_BETWEEN_REQUESTS=4
+KYOWA_MIN_SECONDS_BETWEEN_REQUESTS=3
 KYOWA_MAX_READS_PER_DAY=60
 KYOWA_MAX_TOKENS_PER_DAY=650000
 ```
@@ -97,7 +97,7 @@ The interface follows four constraints from the essay:
 - refusal should be cheap
 - nothing should become a message until the writer decides it has settled
 
-That is why the side rail uses low-contrast language, short question-like readings, dismiss controls, and no autocomplete.
+That is why the page uses low-contrast ghost lines, short question-like readings, cheap pinning, and no autocomplete.
 
 ## Thinking Session Adaptation
 
@@ -107,4 +107,4 @@ This prototype borrows three product ideas from the Thinking Session frame:
 - user-owned markers for fragments that should remain available
 - explicit settling later, rather than silently turning every AI reading into direction
 
-It does not adopt the observer/analyzer frame. In Kyowa Sketch, AI is a weak participant in the conversation: it offers small utterances that the writer can keep, push against, or let pass.
+It does not adopt the observer/analyzer frame. In Kyowa Sketch, AI is a weak participant in the conversation: it offers small utterances that the writer can keep, write through, or let pass.

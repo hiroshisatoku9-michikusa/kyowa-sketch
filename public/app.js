@@ -2,7 +2,7 @@
   const els = {
     draft: document.querySelector("#draft"),
     charCount: document.querySelector("#charCount"),
-    marginNotes: document.querySelector("#marginNotes"),
+    ghostNotes: document.querySelector("#ghostNotes"),
     readGaze: document.querySelector("#readGaze"),
     history: document.querySelector("#history"),
     activeToggle: document.querySelector("#activeToggle"),
@@ -28,7 +28,7 @@
       draftPlaceholder:
         "I keep noticing that AI replies arrive too late, after the thought has already hardened...",
       draftHelp:
-        "Start typing. After a short pause, provisional AI readings appear as faint marginal notes.",
+        "Start typing. After a short pause, provisional AI readings appear faintly between your lines.",
       aiOn: "AI on",
       interval: "Delay",
       densityLegend: "Reading density",
@@ -37,7 +37,7 @@
       densitySpecific: "Specific",
       languageLegend: "Language",
       advancedSummary: "Advanced",
-      emptyStart: "A faint reading will appear in the margin.",
+      emptyStart: "A faint co-speech line will appear between your lines.",
       markersLabel: "kept fragments",
       historyLabel: "recent traces",
       clear: "clear",
@@ -45,7 +45,7 @@
       tokens: "tokens",
       dailyCap: "daily cap",
       aiPaused: "AI readings are paused. Your draft stays here.",
-      tooShort: "Write a little more and the margin will begin to answer.",
+      tooShort: "Write a little more and the page will begin to murmur back.",
       fetchFailed: "The reading stalled. Wait a moment and keep writing.",
       rateLimited: "A little too fast. Keeping this draft for the next interval.",
       authRequired: "Sign in to Codex with ChatGPT, then start the app again.",
@@ -53,10 +53,10 @@
       unchanged: "When the draft moves a little more, the next reading will appear.",
       genericError: "Not ready yet. Check the Codex connection.",
       readingNow: "reading",
-      noReading: "No marginal reading this time.",
+      noReading: "No ghost line this time.",
       noMarks: "No marks",
-      pinNote: "Pin this marginal reading",
-      unpinNote: "Unpin this marginal reading",
+      pinNote: "Pin this ghost co-speech line",
+      unpinNote: "Unpin this ghost co-speech line",
     },
     ja: {
       eyebrow: "local co-speech",
@@ -64,7 +64,7 @@
       draftHint: "未送信の紙面",
       chars: "文字",
       draftPlaceholder: "最近AIを使っていて、便利すぎることについて、なんというか...",
-      draftHelp: "書き始めると、短い間のあとに、淡い読みが余白へ置かれます。",
+      draftHelp: "書き始めると、短い間のあとに、淡い読みが行間へ浮かびます。",
       aiOn: "AI on",
       interval: "間隔",
       densityLegend: "読みの濃さ",
@@ -73,7 +73,7 @@
       densitySpecific: "具体",
       languageLegend: "言語",
       advancedSummary: "詳細",
-      emptyStart: "余白に薄い読みが置かれます。",
+      emptyStart: "行間に薄い共話が浮かびます。",
       markersLabel: "残した断片",
       historyLabel: "最近の痕跡",
       clear: "消す",
@@ -81,7 +81,7 @@
       tokens: "トークン",
       dailyCap: "日次上限",
       aiPaused: "AIの読みを止めています。文章はここに残ります。",
-      tooShort: "もう少し書くと、余白が応答し始めます。",
+      tooShort: "もう少し書くと、紙面が小さく応答し始めます。",
       fetchFailed: "読みの取得で止まりました。少し待ってからまた書いてみてください。",
       rateLimited: "少し速すぎます。今の文を保ったまま、次の間で読みます。",
       authRequired: "CodexにChatGPTでサインインしてから、もう一度起動してください。",
@@ -89,10 +89,10 @@
       unchanged: "もう少し文が動いたら、次の読みを置きます。",
       genericError: "まだ読めません。Codexの状態を確認してください。",
       readingNow: "読んでいます",
-      noReading: "今回は余白に置ける読みがありませんでした。",
+      noReading: "今回は浮かべる共話がありませんでした。",
       noMarks: "印なし",
-      pinNote: "この余白の読みを残す",
-      unpinNote: "この余白の読みの固定を外す",
+      pinNote: "このゴースト共話を残す",
+      unpinNote: "このゴースト共話の固定を外す",
     },
   };
 
@@ -104,13 +104,18 @@
     language: "kyowa:language",
     history: "kyowa:history",
     markers: "kyowa:markers",
+    delayDefaultVersion: "kyowa:delay-default-version",
   };
 
   const noteOffsets = [
     { x: "0px", y: "0px", r: "-0.2deg" },
-    { x: "9px", y: "4px", r: "0.18deg" },
-    { x: "-4px", y: "10px", r: "-0.08deg" },
+    { x: "18px", y: "1px", r: "0.14deg" },
+    { x: "-10px", y: "2px", r: "-0.08deg" },
   ];
+
+  const DEFAULT_DELAY_MS = "3000";
+  const PREVIOUS_DEFAULT_DELAY_MS = "4000";
+  const DELAY_DEFAULT_VERSION = "interline-3000";
 
   const app = {
     status: null,
@@ -134,7 +139,15 @@
   async function init() {
     els.draft.value = localStorage.getItem(storage.draft) || "";
     els.activeToggle.checked = localStorage.getItem(storage.active) !== "false";
-    els.delayRange.value = localStorage.getItem(storage.delay) || "4000";
+    const savedDelay = localStorage.getItem(storage.delay);
+    const delayDefaultMigrated =
+      localStorage.getItem(storage.delayDefaultVersion) === DELAY_DEFAULT_VERSION;
+    els.delayRange.value =
+      savedDelay && (savedDelay !== PREVIOUS_DEFAULT_DELAY_MS || delayDefaultMigrated)
+        ? savedDelay
+        : DEFAULT_DELAY_MS;
+    localStorage.setItem(storage.delay, els.delayRange.value);
+    localStorage.setItem(storage.delayDefaultVersion, DELAY_DEFAULT_VERSION);
     const density = localStorage.getItem(storage.density) || "thin";
     const densityInput = document.querySelector(`input[name="density"][value="${density}"]`);
     if (densityInput) densityInput.checked = true;
@@ -365,6 +378,7 @@
       draftLength: els.draft.value.trim().length,
     });
     note.text = safeText;
+    note.element.dataset.state = "";
     note.element.innerHTML = `${escapeHtml(safeText)}<span class="blinker" aria-hidden="true"></span>`;
   }
 
@@ -395,6 +409,7 @@
     if (existing) {
       existing.text = message;
       existing.element.textContent = message;
+      existing.element.dataset.state = "";
       clearNoteTimers(existing);
       scheduleHintLifecycle(existing);
       return;
@@ -418,32 +433,34 @@
       streaming: Boolean(options.streaming),
       hint: Boolean(options.hint),
       timers: [],
-      element: document.createElement(options.hint ? "p" : "button"),
+      element: document.createElement(options.hint || options.streaming ? "p" : "button"),
     };
 
     const offset = noteOffsets[index % noteOffsets.length];
-    const top = anchorTopForDraft() + index * 112;
-    note.element.className = `margin-note ${options.className || ""}`.trim();
+    const top = anchorTopForDraft() + index * interlineMetrics().lineHeight;
+    note.element.className = `ghost-note ${options.className || ""}`.trim();
     note.element.dataset.noteId = String(note.id);
     note.element.style.setProperty("--note-top", `${top}px`);
+    note.element.style.setProperty("--note-left", `${anchorLeftForDraft(index)}px`);
     note.element.style.setProperty("--note-x", offset.x);
     note.element.style.setProperty("--note-y", offset.y);
     note.element.style.setProperty("--note-r", offset.r);
     note.element.textContent = text;
 
-    if (!note.hint) {
+    if (!note.hint && !note.streaming) {
       note.element.type = "button";
       note.element.draggable = true;
       note.element.setAttribute("aria-label", t("pinNote"));
       note.element.addEventListener("click", () => toggleNotePin(note));
       note.element.addEventListener("dragstart", (event) => {
-        event.dataTransfer?.setData("text/plain", note.text);
+        if (!event.dataTransfer) return;
+        event.dataTransfer.setData("text/plain", note.text);
         event.dataTransfer.effectAllowed = "copy";
       });
     }
 
     app.notes.push(note);
-    els.marginNotes.appendChild(note.element);
+    els.ghostNotes.appendChild(note.element);
     return note;
   }
 
@@ -528,13 +545,50 @@
   }
 
   function anchorTopForDraft() {
-    const marginHeight = els.marginNotes.clientHeight || 648;
+    const metrics = interlineMetrics();
+    const pageHeight = els.ghostNotes.clientHeight || 648;
     const beforeCursor = els.draft.value.slice(0, els.draft.selectionStart || els.draft.value.length);
-    const hardBreaks = beforeCursor.split("\n").length - 1;
-    const softWraps = Math.floor(beforeCursor.length / 58);
+    const hardLines = beforeCursor.split("\n");
+    const hardBreaks = hardLines.length - 1;
+    const charsPerLine = approximateCharsPerLine(metrics);
+    const softWraps = hardLines.reduce((sum, line) => sum + Math.floor(line.length / charsPerLine), 0);
     const approximateLine = hardBreaks + softWraps;
-    const top = 72 + approximateLine * 18 - els.draft.scrollTop * 0.35;
-    return clamp(top, 72, Math.max(92, marginHeight - 286));
+    const top =
+      metrics.paddingTop +
+      approximateLine * metrics.lineHeight +
+      metrics.lineHeight * 0.63 -
+      els.draft.scrollTop;
+    return clamp(top, metrics.paddingTop + 26, Math.max(92, pageHeight - 152));
+  }
+
+  function anchorLeftForDraft(index) {
+    const metrics = interlineMetrics();
+    const beforeCursor = els.draft.value.slice(0, els.draft.selectionStart || els.draft.value.length);
+    const currentHardLine = beforeCursor.split("\n").pop() || "";
+    const charsPerLine = approximateCharsPerLine(metrics);
+    const textWidth = Math.max(360, els.draft.clientWidth - metrics.paddingLeft - metrics.paddingRight);
+    const charWidth = textWidth / charsPerLine;
+    const column = currentHardLine.length % charsPerLine;
+    const rawLeft = metrics.paddingLeft + Math.min(column * charWidth * 0.45, textWidth * 0.42);
+    return clamp(rawLeft + index * 18, metrics.paddingLeft, metrics.paddingLeft + textWidth * 0.5);
+  }
+
+  function interlineMetrics() {
+    const styles = window.getComputedStyle(els.draft);
+    const fontSize = parseFloat(styles.fontSize) || 28;
+    const lineHeight = parseFloat(styles.lineHeight) || fontSize * 2.08;
+    return {
+      fontSize,
+      lineHeight,
+      paddingTop: parseFloat(styles.paddingTop) || 38,
+      paddingLeft: parseFloat(styles.paddingLeft) || 64,
+      paddingRight: parseFloat(styles.paddingRight) || 64,
+    };
+  }
+
+  function approximateCharsPerLine(metrics) {
+    const textWidth = Math.max(360, els.draft.clientWidth - metrics.paddingLeft - metrics.paddingRight);
+    return Math.max(28, Math.floor(textWidth / (metrics.fontSize * 0.54)));
   }
 
   function flashReadGaze() {
